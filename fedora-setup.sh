@@ -15,13 +15,22 @@ fi
 
 
 
-OPTIONS=(1 "Enable RPM Fusion - Enables the RPM Fusion Repos"
-         2 "Enable Better Fonts - Better font rendering by Dawid"
-         3 "Speed up DNF - This enables fastestmirror, max downloads and deltarpms"
-         4 "Enable Flatpak - Flatpak is installed by default but not enabled"
-         5 "Install Software - Installs a bunch of my most used software"
-         6 "Setup Flat Look - Installs and Enables the Flat GTK and Icon themes"
-         7 "Quit")
+OPTIONS=(1 "Enable RPM Fusion"
+         2 "Enable Flathub"
+         3 "Speed up DNF"
+         4 "Install Nvidia"
+         5 "Enable Better Fonts"
+         6 "Install Tweaks, Plugins & Extensions"
+         7 "Install winehq-staging for Fedora 34"
+         8 "Install winehq-staging for Fedora 35"
+         9 "Install winetricks"
+         10 "Install Sublime Text"
+         11 "Install Microsoft Edge"
+         12 "Install EnPass"
+         13 "Install NextDNS"
+         14 "Install Tremotesf"
+         15 "Install Goverlay"
+         16 "Quit")
 
 while [ "$CHOICE -ne 4" ]; do
     CHOICE=$(dialog --clear \
@@ -37,39 +46,88 @@ while [ "$CHOICE -ne 4" ]; do
     case $CHOICE in
         1)  echo "Enabling RPM Fusion"
             sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-            notify-send "RPM Fusion Enabled" --expire-time=10
+            sudo dnf upgrade --refresh
+            sudo dnf groupupdate -y core
+            sudo dnf install -y rpmfusion-free-release-tainted
+            sudo dnf install -y dnf-plugins-core
            ;;
-        2)  echo "Enabling Better Fonts by Dawid"
-            sudo -s dnf -y copr enable dawid/better_fonts
-            sudo -s dnf install -y fontconfig-font-replacements
-            sudo -s dnf install -y fontconfig-enhanced-defaults
-            notify-send "Fonts prettified - enjoy!" --expire-time=10
+        2)  echo "Enabling Flathub"
+            flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+            flatpak update
            ;;
         3)  echo "Speeding Up DNF"
+            echo "#Custom changes" | sudo tee -a /dnf/dnf.conf
             echo 'fastestmirror=1' | sudo tee -a /etc/dnf/dnf.conf
             echo 'max_parallel_downloads=10' | sudo tee -a /etc/dnf/dnf.conf
             echo 'deltarpm=true' | sudo tee -a /etc/dnf/dnf.conf
-            notify-send "Your DNF config has now been amended" --expire-time=10
            ;;
-        4)  echo "Enabling Flatpak"
-            flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            flatpak update
-            notify-send "Flatpak has now been enabled" --expire-time=10
+        4)  echo "Installing Nvidia driver and tools"
+            sudo dnf install -y akmod-nvidia
+            sudo dnf install -y xorg-x11-drv-nvidia-cuda
+            sudo dnf install -y xorg-x11-drv-nvidia-cuda-libs
+            sudo dnf install -y xorg-x11-drv-nvidia-power
+            sudo dnf install -y vdpauinfo libva-vdpau-driver libva-utils
+            sudo dnf install -y vulkan
+            sudo grubby --update-kernel=ALL --args='nvidia-drm.modeset=1'
+            sudo systemctl enable nvidia-{suspend,resume,hibernate}
            ;;
-        5)  echo "Installing Software"
-            sudo dnf install -y gnome-extensions-app gnome-tweaks gnome-shell-extension-appindicator gstreamer1-plugins-{bad-\*,good-\*,base} gstreamer1-plugin-openh264 gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel lame\* --exclude=lame-devel elementary-icon-theme deepin-icon-theme yaru-theme numix-gtk-theme moka-icon-theme greybird-dark-theme arc-theme tlp tlp-rdw vlc dropbox nautilus-dropbox dnfdragora paper-icon-theme flat-remix-icon-theme flat-remix-theme
-            notify-send "Software has been installed" --expire-time=10
+        5)  echo "Enabling Better Fonts by Dawid"
+            sudo -s dnf -y copr enable dawid/better_fonts
+            sudo -s dnf install -y fontconfig-font-replacements
+            sudo -s dnf install -y fontconfig-enhanced-defaults
            ;;
-        6)  echo "Enabling Flat GTK and Icon Theme"
-            sudo dnf install -y gnome-shell-extensions-user-theme
-            gnome-extensions install user-theme@gnome-shell-extensions.gcampax.github.com
-            gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
-            gsettings set org.gnome.desktop.interface gtk-theme "Flat-Remix-GTK-Blue"
-            gsettings set org.gnome.desktop.wm.preferences theme "Flat-Remix-Blue"
-            gsettings set org.gnome.desktop.interface icon-theme 'Flat-Remix-Blue'
-            notify-send "There you go, that's better" --expire-time=10
+        6)  echo "Installing Tweaks, extensions & plugins"
+            sudo dnf install -y gnome-extensions-app gnome-tweaks gnome-shell-extension-appindicator
+            sudo dnf groupupdate -y sound-and-video
+            sudo dnf install -y libdvdcss
+            sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,ugly-\*,base} gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel ffmpeg gstreamer-ffmpeg
+            sudo dnf install -y lame\* --exclude=lame-devel
+            sudo dnf group upgrade -y --with-optional Multimedia
            ;;
-        7)
+        7)  echo "Installing winehq-staging for F34"
+            sudo dnf config-manager --add-repo https://dl.winehq.org/wine-builds/fedora/34/winehq.repo
+            sudo dnf install -y winehq-staging
+           ;;
+        8)  echo "Installing winehq-staging for F35"
+            sudo dnf config-manager --add-repo winehq.fedora.35.repo
+            sudo dnf install -y winehq-staging
+           ;;
+        9)  echo "Installing winetricks"
+            wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
+            chmod +x winetricks
+            sudo mv winetricks /usr/bin
+            wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks.bash-completion
+            sudo mv winetricks.bash-completion /usr/share/bash-completion/completions/winetricks
+            wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks.1
+            sudo mv winetricks.1 /usr/share/man/man1/winetricks.1
+           ;;
+       10)  echo "Installing sublime text"
+            sudo rpm -v --import https://download.sublimetext.com/sublimehq-rpm-pub.gpg
+            sudo dnf config-manager --add-repo https://download.sublimetext.com/rpm/stable/x86_64/sublime-text.repo
+            sudo dnf install -y sublime-text
+           ;;
+       11)  echo "Installing microsoft edge beta"
+            sudo rpm -v --import https://packages.microsoft.com/keys/microsoft.asc
+            sudo dnf config-manager --add-repo https://packages.microsoft.com/yumrepos/edge
+            sudo mv /etc/yum.repos.d/packages.microsoft.com_yumrepos_edge.repo /etc/yum.repos.d/microsoft-edge-beta.repo
+            sudo dnf install -y microsoft-edge-beta
+           ;;
+       12)  echo "Installing enpass"
+            sudo dnf config-manager --add-repo https://yum.enpass.io/enpass-yum.repo
+            sudo dnf install -y enpass
+           ;;
+       13)  echo "Installing NextDNS"
+            sudo dnf config-manager --add-repo https://repo.nextdns.io/nextdns.repo
+            sudo dnf install -y nextdns
+           ;;
+       14)  echo "Installing Tremotesf"
+            sudo dnf copr enable equeim/tremotesf
+            sudo dnf install -y tremotesf
+           ;;
+       15)  echo "Installing Goverlay"
+            sudo dnf install -y goverlay
+           ;;
+       16)
           exit 0
           ;;
     esac
