@@ -24,13 +24,10 @@ OPTIONS=(1 "Enable RPM Fusion"
          7 "Install winehq-staging for Fedora 34"
          8 "Install winehq-staging for Fedora 35"
          9 "Install winetricks"
-         10 "Install Sublime Text"
-         11 "Install Microsoft Edge"
-         12 "Install EnPass"
-         13 "Install NextDNS"
-         14 "Install Tremotesf"
-         15 "Install Goverlay"
-         16 "Quit")
+         10 "Install Microsoft Edge"
+         11 "Install Common Software"
+         12 "Disable firewalld"
+         37 "Quit")
 
 while [ "$CHOICE -ne 4" ]; do
     CHOICE=$(dialog --clear \
@@ -51,15 +48,15 @@ while [ "$CHOICE -ne 4" ]; do
             sudo dnf install -y rpmfusion-free-release-tainted
             sudo dnf install -y dnf-plugins-core
            ;;
-        2)  echo "Enabling Flathub"
-            flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            flatpak update
+        2)  echo "Swappiness Tweak"
+            echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
            ;;
         3)  echo "Speeding Up DNF"
-            echo "#Custom changes" | sudo tee -a /dnf/dnf.conf
-            echo 'fastestmirror=1' | sudo tee -a /etc/dnf/dnf.conf
+            echo "#Custom changes" | sudo tee -a /etc/dnf/dnf.conf
+            echo 'defaultyes=True' | sudo tee -a /etc/dnf/dnf.conf
+            echo 'fastestmirror=True' | sudo tee -a /etc/dnf/dnf.conf
             echo 'max_parallel_downloads=10' | sudo tee -a /etc/dnf/dnf.conf
-            echo 'deltarpm=true' | sudo tee -a /etc/dnf/dnf.conf
+            echo 'deltarpm=True' | sudo tee -a /etc/dnf/dnf.conf
            ;;
         4)  echo "Installing Nvidia driver and tools"
             sudo dnf install -y akmod-nvidia
@@ -77,7 +74,6 @@ while [ "$CHOICE -ne 4" ]; do
             sudo -s dnf install -y fontconfig-enhanced-defaults
            ;;
         6)  echo "Installing Tweaks, extensions & plugins"
-            sudo dnf install -y gnome-extensions-app gnome-tweaks gnome-shell-extension-appindicator
             sudo dnf groupupdate -y sound-and-video
             sudo dnf install -y libdvdcss
             sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,ugly-\*,base} gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel ffmpeg gstreamer-ffmpeg
@@ -101,33 +97,20 @@ while [ "$CHOICE -ne 4" ]; do
             wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks.1
             sudo mv winetricks.1 /usr/share/man/man1/winetricks.1
            ;;
-       10)  echo "Installing sublime text"
-            sudo rpm -v --import https://download.sublimetext.com/sublimehq-rpm-pub.gpg
-            sudo dnf config-manager --add-repo https://download.sublimetext.com/rpm/stable/x86_64/sublime-text.repo
-            sudo dnf install -y sublime-text
-           ;;
-       11)  echo "Installing microsoft edge beta"
+       10)  echo "Installing microsoft edge beta"
             sudo rpm -v --import https://packages.microsoft.com/keys/microsoft.asc
             sudo dnf config-manager --add-repo https://packages.microsoft.com/yumrepos/edge
             sudo mv /etc/yum.repos.d/packages.microsoft.com_yumrepos_edge.repo /etc/yum.repos.d/microsoft-edge-beta.repo
             sudo dnf install -y microsoft-edge-beta
            ;;
-       12)  echo "Installing enpass"
-            sudo dnf config-manager --add-repo https://yum.enpass.io/enpass-yum.repo
-            sudo dnf install -y enpass
+       11)  echo "Installing Software"
+            sudo dnf install -y mediainfo steam plex-media-player gnome-disk-utility unrar unzip mangohud gamemode numlockx mscore-fonts-all audacious audacious-plugins neofetch cpufetch papirus-icon-theme celluloid cmatrix gparted kvantum okular p7zip protontricks
            ;;
-       13)  echo "Installing NextDNS"
-            sudo dnf config-manager --add-repo https://repo.nextdns.io/nextdns.repo
-            sudo dnf install -y nextdns
+       12)  echo "Disabling Firewalld Service"
+            sudo systemctl stop firewalld.service
+            sudo systemctl disable firewalld.service
            ;;
-       14)  echo "Installing Tremotesf"
-            sudo dnf copr enable equeim/tremotesf
-            sudo dnf install -y tremotesf
-           ;;
-       15)  echo "Installing Goverlay"
-            sudo dnf install -y goverlay
-           ;;
-       16)
+       37)
           exit 0
           ;;
     esac
