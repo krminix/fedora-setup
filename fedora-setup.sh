@@ -16,17 +16,15 @@ fi
 
 
 OPTIONS=(1 "Enable RPM Fusion"
-         2 "Enable Flathub"
+         2 "Swappiness Tweak"
          3 "Speed up DNF"
          4 "Install Nvidia"
-         5 "Enable Better Fonts"
-         6 "Install Tweaks, Plugins & Extensions"
-         7 "Install winehq-staging for Fedora 34"
-         8 "Install winehq-staging for Fedora 35"
-         9 "Install winetricks"
-         10 "Install Microsoft Edge"
-         11 "Install Common Software"
-         12 "Disable firewalld"
+         5 "Enable Better Fonts (Dawid)"
+         6 "Install Multimedia Plugins"
+         7 "Update Device Firmware"
+         8 "Install Microsoft Edge Stable"
+         9 "Install Common Software"
+         10 "Disable Firewalld Service"
          37 "Quit")
 
 while [ "$CHOICE -ne 4" ]; do
@@ -46,7 +44,9 @@ while [ "$CHOICE -ne 4" ]; do
             sudo dnf upgrade --refresh
             sudo dnf groupupdate -y core
             sudo dnf install -y rpmfusion-free-release-tainted
+            sudo dnf install -y rpmfusion-nonfree-release-tainted
             sudo dnf install -y dnf-plugins-core
+            sudo dnf install -y \*-firmware
            ;;
         2)  echo "Swappiness Tweak"
             echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
@@ -73,40 +73,29 @@ while [ "$CHOICE -ne 4" ]; do
             sudo -s dnf install -y fontconfig-font-replacements
             sudo -s dnf install -y fontconfig-enhanced-defaults
            ;;
-        6)  echo "Installing Tweaks, extensions & plugins"
+        6)  echo "Installing Multimedia Plugins"
             sudo dnf groupupdate -y sound-and-video
             sudo dnf install -y libdvdcss
             sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,ugly-\*,base} gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel ffmpeg gstreamer-ffmpeg
             sudo dnf install -y lame\* --exclude=lame-devel
             sudo dnf group upgrade -y --with-optional Multimedia
            ;;
-        7)  echo "Installing winehq-staging for F34"
-            sudo dnf config-manager --add-repo https://dl.winehq.org/wine-builds/fedora/34/winehq.repo
-            sudo dnf install -y winehq-staging
+        7)  echo "Update Device Firmware"
+            sudo fwupdmgr get-devices
+            sudo fwupdmgr refresh --force
+            sudo fwupdmgr get-updates
+            sudo fwupdmgr update
            ;;
-        8)  echo "Installing winehq-staging for F35"
-            sudo dnf config-manager --add-repo winehq.fedora.35.repo
-            sudo dnf install -y winehq-staging
+       8)  echo "Installing Microsoft Edge Stable"
+			sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc -y
+			sudo dnf config-manager --add-repo https://packages.microsoft.com/yumrepos/edge
+			sudo mv /etc/yum.repos.d/packages.microsoft.com_yumrepos_edge.repo /etc/yum.repos.d/microsoft-edge-stable.repo
+			sudo dnf install -y microsoft-edge-stable
            ;;
-        9)  echo "Installing winetricks"
-            wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
-            chmod +x winetricks
-            sudo mv winetricks /usr/bin
-            wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks.bash-completion
-            sudo mv winetricks.bash-completion /usr/share/bash-completion/completions/winetricks
-            wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks.1
-            sudo mv winetricks.1 /usr/share/man/man1/winetricks.1
+       9)  echo "Installing Software"
+            sudo dnf install -y mediainfo steam plex-media-player gnome-disk-utility unrar unzip mangohud gamemode numlockx mscore-fonts-all audacious audacious-plugins neofetch cpufetch papirus-icon-theme fira-code-fonts mozilla-fira* google-roboto* celluloid cmatrix gparted kvantum okular p7zip protontricks
            ;;
-       10)  echo "Installing microsoft edge beta"
-            sudo rpm -v --import https://packages.microsoft.com/keys/microsoft.asc
-            sudo dnf config-manager --add-repo https://packages.microsoft.com/yumrepos/edge
-            sudo mv /etc/yum.repos.d/packages.microsoft.com_yumrepos_edge.repo /etc/yum.repos.d/microsoft-edge-beta.repo
-            sudo dnf install -y microsoft-edge-beta
-           ;;
-       11)  echo "Installing Software"
-            sudo dnf install -y mediainfo steam plex-media-player gnome-disk-utility unrar unzip mangohud gamemode numlockx mscore-fonts-all audacious audacious-plugins neofetch cpufetch papirus-icon-theme celluloid cmatrix gparted kvantum okular p7zip protontricks
-           ;;
-       12)  echo "Disabling Firewalld Service"
+       10)  echo "Disabling Firewalld Service"
             sudo systemctl stop firewalld.service
             sudo systemctl disable firewalld.service
            ;;
