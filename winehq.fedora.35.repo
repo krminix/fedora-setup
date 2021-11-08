@@ -1,7 +1,0 @@
-[WineHQ]
-name=WineHQ packages
-type=rpm-md
-baseurl=https://dl.winehq.org/wine-builds/fedora/35
-gpgcheck=1
-gpgkey=https://dl.winehq.org/wine-builds/winehq.key
-enabled=1
